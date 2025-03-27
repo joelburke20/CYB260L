@@ -1,0 +1,118 @@
+# Description of what this change includes
+# Revision number
+# Date
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation template to create a VPC across 3 AZs in the US-West-2 region.
+
+Resources:
+  # VPC Definition
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.0.0.0/16"
+      EnableDnsSupport: "true"
+      EnableDnsHostnames: "true"
+      Tags:
+        - Key: Name
+          Value: "VPC-joebur2749"
+  
+  # Subnet 1 in AZ 1
+  SubnetAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.1.0/24"
+      AvailabilityZone: "us-west-2a"
+      Tags:
+        - Key: Name
+          Value: "Subnet-1-AZ1"
+
+  # Subnet 2 in AZ 2
+  SubnetAZ2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.2.0/24"
+      AvailabilityZone: "us-west-2b"
+      Tags:
+        - Key: Name
+          Value: "Subnet-2-AZ2"
+
+  # Subnet 3 in AZ 3
+  SubnetAZ3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: "10.0.3.0/24"
+      AvailabilityZone: "us-west-2c"
+      Tags:
+        - Key: Name
+          Value: "Subnet-3-AZ3"
+
+  # Internet Gateway Definition
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: "VPC-joebur2749-IGW"
+
+  # Attach Internet Gateway to the VPC
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # Route Table for Public Subnets
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+
+  # Public Route
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref InternetGateway
+
+  # Associate Route Table with Subnet 1 (AZ1)
+  RouteTableAssociationAZ1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetAZ1
+      RouteTableId: !Ref PublicRouteTable
+
+  # Associate Route Table with Subnet 2 (AZ2)
+  RouteTableAssociationAZ2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetAZ2
+      RouteTableId: !Ref PublicRouteTable
+
+  # Associate Route Table with Subnet 3 (AZ3)
+  RouteTableAssociationAZ3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetAZ3
+      RouteTableId: !Ref PublicRouteTable
+
+Outputs:
+  VPCId:
+    Description: "VPC ID"
+    Value: !Ref VPC
+  SubnetAZ1Id:
+    Description: "Subnet ID in AZ 1"
+    Value: !Ref SubnetAZ1
+  SubnetAZ2Id:
+    Description: "Subnet ID in AZ 2"
+    Value: !Ref SubnetAZ2
+  SubnetAZ3Id:
+    Description: "Subnet ID in AZ 3"
+    Value: !Ref SubnetAZ3
+  InternetGatewayId:
+    Description: "Internet Gateway ID"
+    Value: !Ref InternetGateway
